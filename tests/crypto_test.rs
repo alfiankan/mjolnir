@@ -18,33 +18,7 @@ fn generate_pair_key() {
 
 #[test]
 fn hash_test() {
-    
-    let public_key_pem = "-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDC+Jx89MjzbWw9PPh0dffD+i2c
-J7XMioLndImQvQiNJjZ00zyxjgt4+wkual+ZHhH94HIjRIeLI+ncBEjFMa1xIzHT
-exz/pvJUCsHNxNK9958zR0E997xxSf3C2Lu8BWtJG348xd5QNzb+R+i963PtcAsQ
-fCu+q5gbqqtQEIjlMwIDAQAB
------END PUBLIC KEY-----";
-
-    let data = "name:joko;diognose:[tbc,typhus];";
-
-    // Encrypt with public key
-    let rsa = Rsa::public_key_from_pem(public_key_pem.as_bytes()).unwrap();
-    let mut buf: Vec<u8> = vec![0; rsa.size() as usize];
-    let _ = rsa.public_encrypt(data.as_bytes(), &mut buf, Padding::PKCS1).unwrap();
-    println!("Encrypted: {:?}", hex::encode(buf.clone()));
-    println!("Encrypted: {:?}", buf);
-
-    assert_eq!(4, 4);
-}
-
-
-
-#[test]
-fn decrypt_test() {
-    let passphrase = "rust_by_example";
-
-    let private_key_pem = "-----BEGIN RSA PRIVATE KEY-----
+       let private_key_pem = "-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: AES-128-CBC,43371B6CECDB096AC2A362FD33BF4B07
 
@@ -63,13 +37,38 @@ WMwsyQtIJQviFJpYlQpOVBFaeB69oHJMxfauM8OdEU8yomFl3sAVagNxPfiWsGt4
 LRsReK2BDT/pnhhZG96qSsNPwQlrwffBleTy9BGSuHHox6A7GKyVAAOMND/TY1ak
 -----END RSA PRIVATE KEY-----";
 
-    let data = hex::decode("a014994ef5e2fd0cd6c1d9a128fbc767c9e30ca5c6f82ca19b0211cf05eb4519a83f0134cf35d26a11e5cfb33a4d5c567011ea675a33da816d4104122ccef2807cc0eb3a4231ce52cccdd4eafda799cd55039df8dc57912388cee3083debaffabd16a7ee7b367602746b4334ebf466a6db030366a78b61481f3ee0e827373f7a");
+
+
+    let data = "name:joko;diognose:[tbc,typhus];";
+
+    // Encrypt with public key
+    let rsa = Rsa::private_key_from_pem_passphrase(private_key_pem.as_bytes(), "rust_by_example".as_bytes()).unwrap();
+    let mut buf: Vec<u8> = vec![0; rsa.size() as usize];
+    let _ = rsa.private_encrypt(data.as_bytes(), &mut buf, Padding::PKCS1).unwrap();
+    println!("Encrypted: {:?}", hex::encode(buf.clone()));
+    // println!("Encrypted: {:?}", buf);
+
+    assert_eq!(4, 4);
+}
+
+
+
+#[test]
+fn decrypt_test() {
+    let public_key_pem = "-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDC+Jx89MjzbWw9PPh0dffD+i2c
+J7XMioLndImQvQiNJjZ00zyxjgt4+wkual+ZHhH94HIjRIeLI+ncBEjFMa1xIzHT
+exz/pvJUCsHNxNK9958zR0E997xxSf3C2Lu8BWtJG348xd5QNzb+R+i963PtcAsQ
+fCu+q5gbqqtQEIjlMwIDAQAB
+-----END PUBLIC KEY-----";
+
+    let data = hex::decode("be6ab32885859b2c291e3c5fa7dcdc6bba53f05c92644b530580eb7f4ced51b0d0eb8c8032d9189c31b2f4a948b787338d477619c2152d4d6f9055a55665a1e7174470e74b012965ba2b6f7aacf9bfce0601b0fd618984fbbb34a3bd1c0ca1d205d7f8e1379b31ebab5aa0a2a5c132f8bb9641e65967013561771db5809f71c8");
     //println!("{:?}", data);
 
     //Decrypt with private key
-    let rsa = Rsa::private_key_from_pem_passphrase(private_key_pem.as_bytes(), passphrase.as_bytes()).unwrap();
+    let rsa = Rsa::public_key_from_pem(public_key_pem.as_bytes()).unwrap();
     let mut buf: Vec<u8> = vec![0; rsa.size() as usize];
-    let _ = rsa.private_decrypt(&data.unwrap(), &mut buf, Padding::PKCS1).unwrap();
+    let _ = rsa.public_decrypt(&data.unwrap(), &mut buf, Padding::PKCS1).unwrap();
     println!("Decrypted: {}", String::from_utf8(buf).unwrap());
     assert_eq!(4, 4);
 }

@@ -39,7 +39,7 @@ LRsReK2BDT/pnhhZG96qSsNPwQlrwffBleTy9BGSuHHox6A7GKyVAAOMND/TY1ak
 
 
 
-    let data = "name:joko;diognose:[tbc,typhus];";
+    let data = "name:joko;diognose:[tbc,typhus,diaphra];";
 
     // Encrypt with public key
     let rsa = Rsa::private_key_from_pem_passphrase(private_key_pem.as_bytes(), "rust_by_example".as_bytes()).unwrap();

@@ -55,9 +55,6 @@ fn eval_insert(mql: &str) {
     let mql_tokens: Vec<&str> = mql.split( ' ').collect();
     //println!("{} {}", mql_tokens[0].red(), mql_tokens[1].green());
 
-    // (["'])(.*?[^\\])\1
-    let re = Regex::new(r"'(.+?)'").unwrap();
-
 
     if mql_tokens.len() < 4 {
             println!("{}","invalid mql should INSERT TO :chain_key :string_data".red())
@@ -65,6 +62,11 @@ fn eval_insert(mql: &str) {
     } else {
         if mql_tokens[1].to_uppercase().as_str() == "TO" {
             println!("INSERTING TO CHAIN {}", mql_tokens[2].blue());
+
+            let payload_indexs = Regex::new(r"'(.+?)'").unwrap().find(&mql).unwrap();
+
+            println!("{:?}", mql.trim_start_matches("to"));
+            println!("PAYLOAD {}", &mql[ payload_indexs.start()..payload_indexs.end() ]);
 
         } else {
             // unprocessable

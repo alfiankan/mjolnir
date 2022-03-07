@@ -1,5 +1,6 @@
 use openssl::rsa::{Rsa, Padding};
 use openssl::symm::Cipher;
+use regex::internal::Char;
 
 
 #[test]
@@ -73,3 +74,16 @@ fCu+q5gbqqtQEIjlMwIDAQAB
     assert_eq!(4, 4);
 }
 
+#[test]
+fn trim_mql() {
+    let mql = "insert to f545 'dfffdf fsf fsf'";
+
+    // let mut mql_char: Vec<Char> = Vec::new();
+    // for x in mql.chars() {
+    //     mql_char.push(Char::from(x));
+    // }
+
+    // char_vector.iter().cloned().collect::<String>();
+    println!("{}",  &mql[1..3]);
+
+}

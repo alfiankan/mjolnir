@@ -1,78 +1,12 @@
-use openssl::rsa::{Rsa, Padding};
-use openssl::symm::Cipher;
+use std::{fs, io, time};
+use std::io::{Read, Write};
+use base64_stream::FromBase64Reader;
 use regex::internal::Char;
+use std::collections::HashMap;
+use std::thread::sleep;
+use std::time::UNIX_EPOCH;
+use owo_colors::OwoColorize;
 
-
-#[test]
-fn generate_pair_key() {
-    
-    let pass_phrase = "tersanjung";
-    let rsa = Rsa::generate(2048).unwrap();
-    let private_key: Vec<u8> = rsa.private_key_to_pem_passphrase(Cipher::aes_128_cbc(), pass_phrase.as_bytes()).unwrap();
-    let public_key: Vec<u8> = rsa.public_key_to_pem().unwrap();
-
-    println!("Private key: {}", String::from_utf8(private_key).unwrap());
-    println!("Public key: {}", String::from_utf8(public_key).unwrap());
-
-    assert_eq!(4, 4);
-}
-
-#[test]
-fn hash_test() {
-       let private_key_pem = "-----BEGIN RSA PRIVATE KEY-----
-Proc-Type: 4,ENCRYPTED
-DEK-Info: AES-128-CBC,43371B6CECDB096AC2A362FD33BF4B07
-
-aIs3x9UBN95VJJFsd1ddYxmwAKQdFE5BJwZVYtidV+cZ4Qpmg9tdBLm8AhF5bVGR
-FzAVMxTEFQgwT4o2jH2UxRkRmChwNy6aqdGteDIK6yXQK7//GMmxhbvqMmFzwdof
-2E7Jkq3BQQEqMFu2CxRUPUFYRIebEIZSDCD3PoJ6p7a77qwm/KCXCbad/DqtOGkJ
-wOkPH5AXLIu02MJfs+vcLswXFMlq7aaUrAv5WGt1SpKz9Co6bplSYDG7JE+906Uw
-MIg4XDJTJDKCKyDaPkMydw6StvyNuZfIYUNIofulLci7yoNEGvwQHsHCaHr6n4bt
-I4iC9CbkEcPbf06HAWGFfsexeLGf9mU0HVsZi83QdMhWMbOREakFU755AMvTeB8w
-IMCNn55nzJlSHooKuvJAmbqBBb4+wqgwnoYQEVZmTDZxqT/eR08Zl9d1QeKB+1fw
-gjZmY/10kFLnTKlWGIaLIu60ehbXxZeFbW+m1pF9uHEiIkWgkrHNjKfzWh5EyfhY
-vXxWuZH92ZP/nioGzVQr00oSEPLwW1RSoAx3jPuu1EILNu7lFL896CsDZpa1Oigf
-OMxk0GhMuKs4H6TlHmx5a0TOAcGYWEbnqXi+KUw7pMPFiEs1/2crFI6QfQx8R7dL
-/ohKFvksPExsB196RZ1PFyMdryOr/mCqI4nBT+KzPz4zJF2iTMGq3NFQI2MvW/4g
-WMwsyQtIJQviFJpYlQpOVBFaeB69oHJMxfauM8OdEU8yomFl3sAVagNxPfiWsGt4
-LRsReK2BDT/pnhhZG96qSsNPwQlrwffBleTy9BGSuHHox6A7GKyVAAOMND/TY1ak
------END RSA PRIVATE KEY-----";
-
-
-
-    let data = "name:joko;diognose:[tbc,typhus,diaphra];";
-
-    // Encrypt with public key
-    let rsa = Rsa::private_key_from_pem_passphrase(private_key_pem.as_bytes(), "rust_by_example".as_bytes()).unwrap();
-    let mut buf: Vec<u8> = vec![0; rsa.size() as usize];
-    let _ = rsa.private_encrypt(data.as_bytes(), &mut buf, Padding::PKCS1).unwrap();
-    println!("Encrypted: {:?}", hex::encode(buf.clone()));
-    // println!("Encrypted: {:?}", buf);
-
-    assert_eq!(4, 4);
-}
-
-
-
-#[test]
-fn decrypt_test() {
-    let public_key_pem = "-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDC+Jx89MjzbWw9PPh0dffD+i2c
-J7XMioLndImQvQiNJjZ00zyxjgt4+wkual+ZHhH94HIjRIeLI+ncBEjFMa1xIzHT
-exz/pvJUCsHNxNK9958zR0E997xxSf3C2Lu8BWtJG348xd5QNzb+R+i963PtcAsQ
-fCu+q5gbqqtQEIjlMwIDAQAB
------END PUBLIC KEY-----";
-
-    let data = hex::decode("be6ab32885859b2c291e3c5fa7dcdc6bba53f05c92644b530580eb7f4ced51b0d0eb8c8032d9189c31b2f4a948b787338d477619c2152d4d6f9055a55665a1e7174470e74b012965ba2b6f7aacf9bfce0601b0fd618984fbbb34a3bd1c0ca1d205d7f8e1379b31ebab5aa0a2a5c132f8bb9641e65967013561771db5809f71c8");
-    //println!("{:?}", data);
-
-    //Decrypt with private key
-    let rsa = Rsa::public_key_from_pem(public_key_pem.as_bytes()).unwrap();
-    let mut buf: Vec<u8> = vec![0; rsa.size() as usize];
-    let _ = rsa.public_decrypt(&data.unwrap(), &mut buf, Padding::PKCS1).unwrap();
-    println!("Decrypted: {}", String::from_utf8(buf).unwrap());
-    assert_eq!(4, 4);
-}
 
 #[test]
 fn trim_mql() {
@@ -86,4 +20,123 @@ fn trim_mql() {
     // char_vector.iter().cloned().collect::<String>();
     println!("{}",  &mql[1..3]);
 
+}
+
+#[test]
+fn write_line_chain() {
+
+    let mut file = fs::OpenOptions::new().write(true).append(true).open("data.mj").unwrap();
+    file.write_all(b"hello 1\n").unwrap();
+    file.flush().unwrap();
+}
+
+#[test]
+fn find_last_hash() {
+    let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
+    let mut datas = String::new();
+    file.read_to_string(&mut datas).unwrap();
+    file.flush().unwrap();
+    //println!("{}", datas);
+    // for x in datas.split(";") {
+    //     println!("==> {}", x);
+    // }
+    let rows: Vec<&str> = datas.trim().split("\n").collect();
+    //println!("{:?}", rows);
+
+    //load all box
+    let mut boxs: HashMap<&str, Vec<&str>> = HashMap::new();
+    let mut box_head = String::new();
+    for x in rows {
+        let cols: Vec<&str> = x.split("|").collect();
+        if cols[0] == "8f90cd15532ab112528c017ac452f7adc1072f16b25927babc8b5697fd614307".to_string().as_str() && cols[1] == "8f90cd15532ab112528c017ac452f7adc1072f16b25927babc8b5697fd614307".to_string().as_str() {
+            box_head = cols[3].to_string();
+        }
+        if cols[0] == "8f90cd15532ab112528c017ac452f7adc1072f16b25927babc8b5697fd614307".to_string().as_str() {
+            boxs.insert(cols[1], vec![cols[2], cols[3]]);
+        }
+    }
+
+    println!("CHAINS LENGTH {}", boxs.len());
+    println!("HEAD {}", box_head.blue());
+
+    //println!("{:?}", boxs.get_key_value("7073d6f717c529e2ede1330545a7edd28f07aecbaf28e485e00917ba388522cf") );
+
+    // traversal
+    let mut last_hash = String::new();
+    loop {
+        //let box_data = boxs.get_key_value(box_head.as_str()).unwrap();
+
+        let mut box_data = match boxs.get_key_value(box_head.as_str()) {
+            None => {
+                break;
+            }
+            Some(box_data) => box_data
+        };
+        print!("{}[2J", 27 as char);
+        println!("=============================");
+        println!("PREV_HASH {}", box_data.0.green());
+        println!("DATA {}", box_data.1.to_vec()[0].on_green());
+        println!("HASH {}", box_data.1.to_vec()[1].green());
+        last_hash = box_data.1.to_vec()[1].to_string();
+
+        box_head = box_data.1.to_vec()[1].to_string();
+        sleep(time::Duration::from_millis(20));
+    }
+    println!("CHAINS LENGTH {}", boxs.len().on_green());
+    boxs.clear();
+    println!("LAST HASH {}", last_hash.purple())
+}
+
+fn find_last(chain_key: &str) -> String {
+
+    let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
+    let mut datas = String::new();
+    file.read_to_string(&mut datas).unwrap();
+    file.flush().unwrap();
+
+    let rows: Vec<&str> = datas.trim().split("\n").collect();
+
+    //load all box
+    let mut boxs: HashMap<&str, Vec<&str>> = HashMap::new();
+    let mut box_head = String::new();
+    for x in &rows {
+        let cols: Vec<&str> = x.split("|").collect();
+        if cols[0] == chain_key && cols[1] == chain_key {
+            box_head = cols[3].to_string();
+
+        }
+        if cols[0] == chain_key {
+            boxs.insert(cols[1], vec![cols[2], cols[3]]);
+        }
+    }
+
+    if boxs.len() == 1 {
+        let cols: Vec<&str> = rows[0].split("|").collect();
+        println!("only one box");
+        return cols[3].to_string();
+    }
+
+    // traversal
+    let mut last_hash = String::new();
+    loop {
+        //let box_data = boxs.get_key_value(box_head.as_str()).unwrap();
+
+        let mut box_data = match boxs.get_key_value(box_head.as_str()) {
+            None => {
+                break;
+            }
+            Some(box_data) => box_data
+        };
+        last_hash = box_data.1.to_vec()[1].to_string();
+
+        box_head = box_data.1.to_vec()[1].to_string();
+    }
+    boxs.clear();
+    //println!("LAST HASH {}", last_hash.purple())
+    return last_hash;
+}
+
+#[test]
+fn find_last_hash_last() {
+    println!("LAST {:?}", time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap());
 }

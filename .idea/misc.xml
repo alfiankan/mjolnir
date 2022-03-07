@@ -8,16 +8,20 @@
           <option name="fileUrl" value="file://$PROJECT_DIR$/README.md" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="272" />
+          <option name="caretOffset" value="436" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/Cargo.toml" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="3135" />
-          <option name="fileUrl" value="file://$PROJECT_DIR$/tests/crypto_test.rs" />
+          <option name="caretOffset" value="1449217" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/data.mj" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="2896" />
+          <option name="caretOffset" value="8529" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/src/main.rs" />
+        </OpenedFileInfo>
+        <OpenedFileInfo>
+          <option name="caretOffset" value="1666" />
+          <option name="fileUrl" value="file://$PROJECT_DIR$/tests/crypto_test.rs" />
         </OpenedFileInfo>
       </list>
     </option>

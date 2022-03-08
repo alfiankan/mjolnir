@@ -1,5 +1,5 @@
 use std::{fs, io, time};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io::{Error, Read, Write};
 use std::process::exit;
 use std::time::{UNIX_EPOCH};
@@ -15,9 +15,45 @@ struct DataBox {
 }
 
 
+struct SingleChain {
+    prev_hash: Box<str>,
+    data: Box<str>,
+    hashed_data: Box<str>,
+}
 
 
-fn find_last_hash(chain_key: &str) -> String {
+fn find_all_records() {
+    println!();
+    let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
+    let mut datas = String::new();
+    file.read_to_string(&mut datas).unwrap();
+    file.flush().unwrap();
+
+    let rows: Vec<&str> = datas.trim().split("\n").collect();
+
+    //load all box
+    let mut boxs: BTreeMap<&str, &str> = BTreeMap::new();
+    for x in &rows {
+        let cols: Vec<&str> = x.split("|").collect();
+
+        // find if exist remove
+        match boxs.get_key_value(cols[0]) {
+            None => {
+                boxs.insert(cols[0], cols[3]);
+            }
+            Some(_) => {}
+        };
+
+
+        // if not exist insert
+    }
+    for x in boxs {
+        println!("\t - {}", x.0);
+    }
+}
+
+
+fn find_last_hash(chain_key: &str) -> SingleChain {
 
     let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
     let mut datas = String::new();
@@ -27,7 +63,7 @@ fn find_last_hash(chain_key: &str) -> String {
     let rows: Vec<&str> = datas.trim().split("\n").collect();
 
     //load all box
-    let mut boxs: HashMap<&str, Vec<&str>> = HashMap::new();
+    let mut boxs: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     let mut box_head = String::new();
     for x in &rows {
         let cols: Vec<&str> = x.split("|").collect();
@@ -42,11 +78,19 @@ fn find_last_hash(chain_key: &str) -> String {
 
     if boxs.len() == 1 {
         let cols: Vec<&str> = rows[0].split("|").collect();
-        return cols[3].to_string();
+        return SingleChain{
+            prev_hash: Box::from(cols[1]),
+            data: Box::from(cols[2]),
+            hashed_data: Box::from(cols[3])
+        }
     }
 
     // traversal
-    let mut last_hash = String::new();
+    let mut last_data = SingleChain{
+        prev_hash: Box::from(""),
+        data: Box::from(""),
+        hashed_data: Box::from(""),
+    };
     loop {
         //let box_data = boxs.get_key_value(box_head.as_str()).unwrap();
 
@@ -56,20 +100,22 @@ fn find_last_hash(chain_key: &str) -> String {
             }
             Some(box_data) => box_data
         };
-        last_hash = box_data.1.to_vec()[1].to_string();
+        last_data.prev_hash = Box::from(box_data.0.to_string());
+        last_data.hashed_data = Box::from(box_data.1.to_vec()[1]);
+        last_data.data = Box::from(box_data.1.to_vec()[0]);
 
         box_head = box_data.1.to_vec()[1].to_string();
     }
     boxs.clear();
     //println!("LAST HASH {}", last_hash.purple())
-    return last_hash;
+    return last_data;
 }
 
 fn insert_chain(chain_key: &str, payload: &str) {
 
-    let last_key = find_last_hash(chain_key);
+    let last_key = find_last_hash(chain_key).hashed_data;
     let data = DataBox{
-        prev_hash: Box::from(last_key.as_str()),
+        prev_hash: last_key.clone(),
         data: Box::from(payload),
     };
     //chain_key|prev_hash|data|hash;
@@ -80,7 +126,7 @@ fn insert_chain(chain_key: &str, payload: &str) {
             let mut save_data = String::new();
             save_data.push_str(chain_key);
             save_data.push_str("|");
-            save_data.push_str(last_key.as_str());
+            save_data.push_str(last_key.to_string().as_str());
             save_data.push_str("|");
             save_data.push_str(data.as_str());
             save_data.push_str("|");
@@ -113,7 +159,8 @@ fn show_help() {
         ["GEN", "genesis new record, return chain_key"],
         ["INSERT TO :chain_key :string_data", "insert new chain to record"],
         ["SELECT :chain_key", "get record"],
-        ["SELECT :chain_key ALL", "get chain history limit to 50 chain"]
+        ["SELECT :chain_key ALL", "get chains"],
+        ["FIND :hash ALL", "get chains"] //TODO: this
     ];
     for help in helps {
         print!("{}", help[0].on_red());
@@ -168,16 +215,186 @@ fn eval_insert(mql: &str) {
 
             let payload_indexs = Regex::new(r"'(.+?)'").unwrap().find(&mql).unwrap();
 
-            for i in 0..5000 {
-                insert_chain(mql_tokens[2], i.to_string().as_str());
-            }
+            // for i in 0..5000 {
+            //     insert_chain(mql_tokens[2], i.to_string().as_str());
+            // }
 
-            //insert_chain(mql_tokens[2], &mql[ payload_indexs.start()..payload_indexs.end() ])
+            insert_chain(mql_tokens[2], &mql[ payload_indexs.start()..payload_indexs.end() ])
 
         } else {
             // unprocessable
             println!("{}","invalid mql should INSERT TO :chain_key :string_data".red())
         }
+
+    }
+
+}
+fn chained_view(prev_hash: &str, data: &str, hashed_data: &str) {
+    // trim every 50 chars
+    let mut long_text: Vec<char> = data.chars().collect();
+    println!("\t{}", &prev_hash[0..9].to_string().on_blue() );
+    println!("\t    │    ");
+    println!("\t   ─┴─   ");
+    if long_text.len() > 50 {
+        let mut pointer = 0;
+        let mut writer_pointer = 0;
+        loop {
+            // print!("\t    ├──────────│ ");
+
+            for i in (pointer * 50)..((pointer * 50) + 50) {
+
+                if i < long_text.len() {
+                    writer_pointer = writer_pointer + 1;
+                    print!("{}", long_text[i].green());
+                } else {
+                    break;
+                }
+            }
+
+            //write end
+            print!(" \n");
+            pointer = pointer + 1;
+            if writer_pointer == long_text.len() {
+                break;
+            }
+
+        }
+    } else {
+        //write
+        for i in 0..long_text.len() {
+            print!("{}", long_text[i].green());
+        }
+        //write end
+        print!(" \n");
+
+    }
+    println!("\t   ─┬─   ");
+    println!("\t    │    ");
+    println!("\t{}", &hashed_data[0..9].to_string().on_blue() );
+
+    println!("\t    ▲    ");
+    println!("\t    │    ");
+    println!("\t    ▼    ");
+}
+
+fn eval_select(mql: &str) {
+    let mql_tokens: Vec<&str> = mql.split( ' ').collect();
+    //println!("{} {}", mql_tokens[0].red(), mql_tokens[1].green());
+
+
+    if mql_tokens.len() < 2 {
+        println!("{}","invalid mql see help".red())
+
+    } else {
+
+        // if selecet all
+        if mql_tokens.len() == 3 {
+            if mql_tokens[2].to_uppercase() == "ALL" {
+                println!("get all chains");
+
+                let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
+                let mut datas = String::new();
+                file.read_to_string(&mut datas).unwrap();
+                file.flush().unwrap();
+
+                let rows: Vec<&str> = datas.trim().split("\n").collect();
+
+                //load all box
+                let mut boxs: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+                let mut box_head = String::new();
+                for x in &rows {
+                    let cols: Vec<&str> = x.split("|").collect();
+                    if cols[0] == mql_tokens[1] && cols[1] == mql_tokens[1] {
+                        box_head = cols[3].to_string();
+
+                    }
+                    if cols[0] == mql_tokens[1] {
+                        boxs.insert(cols[1], vec![cols[2], cols[3]]);
+                    }
+                }
+                loop {
+                    //let box_data = boxs.get_key_value(box_head.as_str()).unwrap();
+
+                    let mut box_data = match boxs.get_key_value(box_head.as_str()) {
+                        None => {
+                            break;
+                        }
+                        Some(box_data) => box_data
+                    };
+
+                    chained_view(box_data.0, box_data.1.to_vec()[0], box_data.1.to_vec()[1]);
+                    box_head = box_data.1.to_vec()[1].to_string();
+
+                    //validating
+                    if hash_data(box_data.1.to_vec()[0]) != box_data.1.to_vec()[1] {
+                        println!("\t{}", "DATA IS NOT VALID [No]".on_red());
+                        break;
+                    }
+
+                }
+                boxs.clear();
+
+            }
+        } else if mql_tokens.len() == 2 {
+            let record = find_last_hash(mql_tokens[1]);
+            chained_view(record.prev_hash.to_string().as_str(), record.data.to_string().as_str(), record.hashed_data.to_string().as_str());
+
+        }
+
+    }
+
+}
+
+fn eval_find(mql: &str) {
+    let mql_tokens: Vec<&str> = mql.split( ' ').collect();
+    //println!("{} {}", mql_tokens[0].red(), mql_tokens[1].green());
+
+
+    if mql_tokens.len() < 2 {
+        println!("{}","invalid mql see help".red())
+
+    } else {
+
+        let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
+        let mut datas = String::new();
+        file.read_to_string(&mut datas).unwrap();
+        file.flush().unwrap();
+
+        let rows: Vec<&str> = datas.trim().split("\n").collect();
+
+        //load all box
+        let mut boxs: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+        for x in &rows {
+            let cols: Vec<&str> = x.split("|").collect();
+            boxs.insert(cols[3], vec![cols[2], cols[1]]);
+        }
+
+        //find
+
+        match boxs.get_key_value(mql_tokens[1]) {
+            None => {
+                println!("{} NOT FOUND", mql_tokens[1].red());
+            }
+            Some(box_data) => {
+                chained_view(  box_data.1.to_vec()[1], box_data.1.to_vec()[0],box_data.0 );
+                if hash_data(box_data.1.to_vec()[0]) != box_data.0.to_string() {
+                    println!("\t{}", "DATA IS NOT VALID [No]".on_red());
+                } else {
+                    match boxs.get_key_value(box_data.1.to_vec()[1]) {
+                        None => {
+                            println!("\t{}", "DATA IS NOT VALID [No]".on_red());
+                        }
+                        Some(box_data_prev) => {
+
+                            //check hash
+
+                            println!("\t{}", "DATA IS VALID [Ok]".on_green());
+                        }
+                    };
+                }
+
+            }
+        };
 
     }
 
@@ -264,12 +481,21 @@ fn eval_command(mql: &str) {
     let mql_tokens: Vec<&str> = mql.split( ' ').collect();
 
     match mql_tokens[0].to_uppercase().as_str() {
-        "GENESIS" => {
+        "GEN" => {
             println!("GENERATE NEW CHAIN");
             genesis();
         }
+        "RECORDS" => {
+            find_all_records();
+        }
         "INSERT" => {
             eval_insert(mql);
+        }
+        "SELECT" => {
+            eval_select(mql);
+        }
+        "FIND" => {
+            eval_find(mql);
         }
         "HELP" => {
             show_help();

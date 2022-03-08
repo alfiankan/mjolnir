@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::thread::sleep;
 use std::time::UNIX_EPOCH;
 use owo_colors::OwoColorize;
+use std::collections::BTreeMap;
 
 
 #[test]
@@ -30,6 +31,53 @@ fn write_line_chain() {
     file.flush().unwrap();
 }
 
+fn chained_view(prev_hash: &str, data: &str, hashed_data: &str) {
+    // trim every 50 chars
+    let mut long_text: Vec<char> = data.chars().collect();
+    println!("\t{}", &prev_hash[0..9].to_string().on_blue() );
+    println!("\t    │    ");
+    if long_text.len() > 50 {
+        let mut pointer = 0;
+        let mut writer_pointer = 0;
+        loop {
+            print!("\t    ├──────────│ ");
+
+            for i in (pointer * 50)..((pointer * 50) + 50) {
+
+                if i < long_text.len() {
+                    writer_pointer = writer_pointer + 1;
+                    print!("{}", long_text[i].green());
+                } else {
+                    break;
+                }
+            }
+
+            //write end
+            print!(" \n");
+            pointer = pointer + 1;
+            if writer_pointer == long_text.len() {
+                break;
+            }
+
+        }
+    } else {
+        //write
+        print!("\t    ├──────────│ ");
+        for i in 0..long_text.len() {
+            print!("{}", long_text[i].green());
+        }
+        //write end
+        print!(" \n");
+
+    }
+    println!("\t    │    ");
+    println!("\t{}", &hashed_data[0..9].to_string().on_blue() );
+
+    println!("\t    ▲    ");
+    println!("\t    │    ");
+    println!("\t    ▼    ");
+}
+
 #[test]
 fn find_last_hash() {
     let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
@@ -44,7 +92,7 @@ fn find_last_hash() {
     //println!("{:?}", rows);
 
     //load all box
-    let mut boxs: HashMap<&str, Vec<&str>> = HashMap::new();
+    let mut boxs: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     let mut box_head = String::new();
     for x in rows {
         let cols: Vec<&str> = x.split("|").collect();
@@ -66,21 +114,24 @@ fn find_last_hash() {
     loop {
         //let box_data = boxs.get_key_value(box_head.as_str()).unwrap();
 
-        let mut box_data = match boxs.get_key_value(box_head.as_str()) {
+        let box_data = match boxs.get_key_value(box_head.as_str()) {
             None => {
                 break;
             }
             Some(box_data) => box_data
         };
-        print!("{}[2J", 27 as char);
-        println!("=============================");
-        println!("PREV_HASH {}", box_data.0.green());
-        println!("DATA {}", box_data.1.to_vec()[0].on_green());
-        println!("HASH {}", box_data.1.to_vec()[1].green());
+        //print!("\x1B[2J\x1B[1;1H");
+
+        // println!("=============================");
+        // println!("PREV_HASH {}", box_data.0.green());
+        // println!("DATA {}", box_data.1.to_vec()[0].on_green());
+        // println!("HASH {}", box_data.1.to_vec()[1].green());
+        //
+        chained_view(box_data.0, box_data.1.to_vec()[0], box_data.1.to_vec()[1]);
+
         last_hash = box_data.1.to_vec()[1].to_string();
 
         box_head = box_data.1.to_vec()[1].to_string();
-        sleep(time::Duration::from_millis(20));
     }
     println!("CHAINS LENGTH {}", boxs.len().on_green());
     boxs.clear();
@@ -121,7 +172,7 @@ fn find_last(chain_key: &str) -> String {
     loop {
         //let box_data = boxs.get_key_value(box_head.as_str()).unwrap();
 
-        let mut box_data = match boxs.get_key_value(box_head.as_str()) {
+        let box_data = match boxs.get_key_value(box_head.as_str()) {
             None => {
                 break;
             }
@@ -140,3 +191,72 @@ fn find_last(chain_key: &str) -> String {
 fn find_last_hash_last() {
     println!("LAST {:?}", time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap());
 }
+
+#[test]
+fn chain_display() {
+    println!("LAST {:?}", time::SystemTime::now().duration_since(UNIX_EPOCH).unwrap());
+    println!();
+
+    for _ in 0..5 {
+
+        // trim every 20 chars
+        //let mut long_text: Vec<char> = "MySQL has received positive reviews, and reviewers noticed it performs extremely well in the average case and that the developer interfaces are there, and the documentation (not to mention feedback in the real world via Web sites and the like) is very, very good.[20] It has also been tested to be a fast, stable and true multi-user, multi-threaded SQL database server".chars().collect();
+        let mut long_text: Vec<char> = "{'prev_hash':'68186c23c9c65fc40c09c79b0554cd51880f3b23b21cc5b64d1f531d855ddb7a','data':'6'}".chars().collect();
+
+        //println!("{:?}", (91/50) );
+
+
+
+        if long_text.len() > 50 {
+            let mut pointer = 0;
+            let mut writer_pointer = 0;
+            loop {
+                    if pointer >= (long_text.len() / 50) / 2 {
+                        print!("\t    ├──────────│ ");
+                    } else {
+                        print!("\t    │          │ ");
+                    }
+
+                    for i in (pointer * 50)..((pointer * 50) + 50) {
+
+                        if i < long_text.len() {
+                            writer_pointer = writer_pointer + 1;
+                            print!("{}", long_text[i].green());
+                        } else {
+                            break;
+                        }
+                    }
+                    if writer_pointer == long_text.len() {
+                        break;
+                    }
+                    //write end
+                    print!(" │\n");
+                    pointer = pointer + 1;
+
+            }
+
+        } else {
+            //write
+            print!("\t    ├──────────│ ");
+            for i in 0..long_text.len() {
+                print!("{}", long_text[i].green());
+            }
+            //write end
+            print!(" │\n");
+
+        }
+
+        // println!("\t    ├──────── {}", "ffffjfjjfjjfjffffjfjjfjjfjffff");
+        // println!("\t    │         {}", "ffffjfjjfjjfjffffjfjjfjjfjffff");
+        // println!("\t    │         {}", "ffffjfjjfjjfjffffjfjjfjjfjffff");
+
+        println!("\t{}", "fjkgtmfjo".on_blue());
+
+        println!("\t    ▲    ");
+        println!("\t    │    ");
+        println!("\t    ▼    ");
+    }
+
+
+}
+

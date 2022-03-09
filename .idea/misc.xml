@@ -12,15 +12,15 @@
           <option name="fileUrl" value="file://$PROJECT_DIR$/Cargo.toml" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="1433439" />
+          <option name="caretOffset" value="1443" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/data.mj" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="3227" />
+          <option name="caretOffset" value="3032" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/tests/crypto_test.rs" />
         </OpenedFileInfo>
         <OpenedFileInfo>
-          <option name="caretOffset" value="15132" />
+          <option name="caretOffset" value="16015" />
           <option name="fileUrl" value="file://$PROJECT_DIR$/src/main.rs" />
         </OpenedFileInfo>
       </list>

@@ -7,6 +7,7 @@ use std::thread::sleep;
 use std::time::UNIX_EPOCH;
 use owo_colors::OwoColorize;
 use std::collections::BTreeMap;
+use std::process::exit;
 
 
 #[test]
@@ -78,64 +79,80 @@ fn chained_view(prev_hash: &str, data: &str, hashed_data: &str) {
     println!("\t    ▼    ");
 }
 
+struct SingleChain {
+    prev_hash: Box<str>,
+    data: Box<str>,
+    hashed_data: Box<str>,
+}
+
 #[test]
 fn find_last_hash() {
+    let chain_key = "854c25aab3bb9d45661d567e2713880948990cf00088cf4b7d7e54e6b6eac561";
     let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
     let mut datas = String::new();
     file.read_to_string(&mut datas).unwrap();
     file.flush().unwrap();
-    //println!("{}", datas);
-    // for x in datas.split(";") {
-    //     println!("==> {}", x);
-    // }
+
     let rows: Vec<&str> = datas.trim().split("\n").collect();
-    //println!("{:?}", rows);
 
     //load all box
     let mut boxs: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     let mut box_head = String::new();
-    for x in rows {
+    for x in &rows {
         let cols: Vec<&str> = x.split("|").collect();
-        if cols[0] == "8f90cd15532ab112528c017ac452f7adc1072f16b25927babc8b5697fd614307".to_string().as_str() && cols[1] == "8f90cd15532ab112528c017ac452f7adc1072f16b25927babc8b5697fd614307".to_string().as_str() {
+        if cols[0] == chain_key && cols[1] == chain_key {
             box_head = cols[3].to_string();
+
         }
-        if cols[0] == "8f90cd15532ab112528c017ac452f7adc1072f16b25927babc8b5697fd614307".to_string().as_str() {
+        if cols[0] == chain_key {
             boxs.insert(cols[1], vec![cols[2], cols[3]]);
         }
     }
 
-    println!("CHAINS LENGTH {}", boxs.len());
-    println!("HEAD {}", box_head.blue());
+    println!("{} {}", "BOX LENGTH".on_blue(), boxs.len());
 
-    //println!("{:?}", boxs.get_key_value("7073d6f717c529e2ede1330545a7edd28f07aecbaf28e485e00917ba388522cf") );
+    if boxs.len() == 1 {
+        let mut box_data = match boxs.get_key_value(chain_key) {
+            None => {
+                exit(0);
+            }
+            Some(box_data) => box_data
+        };
+        println!("==> {:?}", box_data.1[1]);
+        exit(0);
+    }
+
+    println!("BOXS HEAD {:?} ", box_head);
+
+    for x in boxs.clone() {
+        println!("BOXS DATA {:?} ", x);
+    }
 
     // traversal
-    let mut last_hash = String::new();
+    let mut last_data = SingleChain{
+        prev_hash: Box::from(""),
+        data: Box::from(""),
+        hashed_data: Box::from(""),
+    };
     loop {
         //let box_data = boxs.get_key_value(box_head.as_str()).unwrap();
 
-        let box_data = match boxs.get_key_value(box_head.as_str()) {
+        let mut box_data = match boxs.get_key_value(box_head.as_str()) {
             None => {
                 break;
             }
             Some(box_data) => box_data
         };
-        //print!("\x1B[2J\x1B[1;1H");
-
-        // println!("=============================");
-        // println!("PREV_HASH {}", box_data.0.green());
-        // println!("DATA {}", box_data.1.to_vec()[0].on_green());
-        // println!("HASH {}", box_data.1.to_vec()[1].green());
-        //
-        chained_view(box_data.0, box_data.1.to_vec()[0], box_data.1.to_vec()[1]);
-
-        last_hash = box_data.1.to_vec()[1].to_string();
+        last_data.prev_hash = Box::from(box_data.0.to_string());
+        last_data.hashed_data = Box::from(box_data.1.to_vec()[1]);
+        last_data.data = Box::from(box_data.1.to_vec()[0]);
 
         box_head = box_data.1.to_vec()[1].to_string();
     }
-    println!("CHAINS LENGTH {}", boxs.len().on_green());
     boxs.clear();
-    println!("LAST HASH {}", last_hash.purple())
+    //println!("LAST HASH {}", last_data.data);
+
+    println!("{} {}", "LAST HAST FROM MORE THAN ONE CHAIN".on_red(), last_data.hashed_data);
 }
 
 fn find_last(chain_key: &str) -> String {

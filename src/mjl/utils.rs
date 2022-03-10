@@ -11,15 +11,15 @@ pub fn hash_data(data: &str) -> String {
 
 /// serialize box to string
 /// return empty string if error
-pub fn serializer(data: DataBox, chain_key: &str) -> String {
+pub fn serializer(prev_hash: &str, data: DataBox, key_chain: &str) -> String {
     match serde_json::to_string(&data) {
         Ok(data) => {
 
             // row format : chain_key|prev_hash|data|hash
             let mut save_data = String::new();
-            save_data.push_str(chain_key);
+            save_data.push_str(key_chain);
             save_data.push_str("|");
-            save_data.push_str(chain_key);
+            save_data.push_str(prev_hash);
             save_data.push_str("|");
             save_data.push_str(data.as_str());
             save_data.push_str("|");
@@ -45,5 +45,5 @@ fn test_serialize() {
         prev_hash: Box::from("xxxxx"),
         data: Box::from("yyyyy")
     };
-    println!("{}", serializer(some_box, "someky") );
+    println!("{}", serializer("sssss",some_box, "someky") );
 }

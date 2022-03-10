@@ -27,7 +27,7 @@ fn trim_mql() {
 #[test]
 fn write_line_chain() {
 
-    let mut file = fs::OpenOptions::new().write(true).append(true).open("data.mj").unwrap();
+    let mut file = fs::OpenOptions::new().write(true).append(true).open("../../data.mj").unwrap();
     file.write_all(b"hello 1\n").unwrap();
     file.flush().unwrap();
 }
@@ -88,7 +88,7 @@ struct SingleChain {
 #[test]
 fn find_last_hash() {
     let chain_key = "854c25aab3bb9d45661d567e2713880948990cf00088cf4b7d7e54e6b6eac561";
-    let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
+    let mut file = fs::OpenOptions::new().read(true).open("../../data.mj").unwrap();
     let mut datas = String::new();
     file.read_to_string(&mut datas).unwrap();
     file.flush().unwrap();
@@ -157,7 +157,7 @@ fn find_last_hash() {
 
 fn find_last(chain_key: &str) -> String {
 
-    let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
+    let mut file = fs::OpenOptions::new().read(true).open("../../data.mj").unwrap();
     let mut datas = String::new();
     file.read_to_string(&mut datas).unwrap();
     file.flush().unwrap();

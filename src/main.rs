@@ -45,7 +45,7 @@ fn find_all_records() {
     }
 }
 
-fn find_last_hash(chain_key: &str) -> types::SingleChain {
+fn find_last_hash(chain_key: &str) -> types::SingleBox {
     let mut file = fs::OpenOptions::new().read(true).open("data.mj").unwrap();
     let mut datas = String::new();
     file.read_to_string(&mut datas).unwrap();
@@ -73,7 +73,7 @@ fn find_last_hash(chain_key: &str) -> types::SingleChain {
             }
             Some(box_data) => box_data,
         };
-        return types::SingleChain {
+        return types::SingleBox {
             prev_hash: Box::from(box_data.0.to_string()),
             data: Box::from(box_data.1[0]),
             hashed_data: Box::from(box_data.1[1]),
@@ -86,7 +86,7 @@ fn find_last_hash(chain_key: &str) -> types::SingleChain {
     }
 
     // traversal
-    let mut last_data = types::SingleChain {
+    let mut last_data = types::SingleBox {
         prev_hash: Box::from(""),
         data: Box::from(""),
         hashed_data: Box::from(""),
@@ -157,7 +157,7 @@ fn show_help() {
         ],
         ["SELECT :chain_key", "get record"],
         ["SELECT :chain_key ALL", "get chains"],
-        ["FIND :hash ALL", "get chains"], //TODO: this
+        ["FIND :hash", "get chains"], //TODO: this
     ];
     for help in helps {
         print!("{}", help[0].on_red());

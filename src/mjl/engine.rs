@@ -314,4 +314,7 @@ impl Engine {
 
     /// cli RECORDS
     pub fn list_records() {}
+
+    /// cli FIND
+    pub fn find_box() {}
 }

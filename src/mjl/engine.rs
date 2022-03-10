@@ -1,10 +1,8 @@
 use crate::mjl::utils::{hash_data, serializer};
 use crate::types;
 use crate::types::{DataBox, MjlError, SelectResult, SingleBox};
-use owo_colors::OwoColorize;
 use std::borrow::Borrow;
 use std::collections::BTreeMap;
-use std::error::Error;
 use std::io::{Read, Write};
 use std::time::UNIX_EPOCH;
 use std::{fs, time};
@@ -39,13 +37,13 @@ impl Engine {
         return match file.read_to_string(&mut data) {
             Ok(_) => Ok(data),
             Err(e) => {
-                return Err(MjlError::new(e.description()));
+                return Err(MjlError::new(e.to_string().as_str()));
             }
         };
     }
 
     /// write persistent data
-    fn write_persistent_data(&self, data: String) -> bool {
+    fn write_persistent_data(&self, data: &str) -> bool {
         let mut file = match fs::OpenOptions::new()
             .write(true)
             .append(true)
@@ -70,7 +68,7 @@ impl Engine {
         let data = match self.read_persistent_data() {
             Ok(data) => data,
             Err(e) => {
-                return Err(MjlError::new("Error reading file"));
+                return Err(MjlError::new(e.to_string().as_str()));
             }
         };
         let rows: Vec<&str> = data.trim().split("\n").collect();
@@ -172,7 +170,7 @@ impl Engine {
                 } else {
                     // writing to file
 
-                    if self.write_persistent_data(serialized) {
+                    if self.write_persistent_data(serialized.as_str()) {
                         Ok(prev_hash)
                     } else {
                         return Err(MjlError::new("genesis chain failed"));
@@ -180,17 +178,17 @@ impl Engine {
                 }
             }
             Err(e) => {
-                return Err(MjlError::new(e.description()));
+                return Err(MjlError::new(e.to_string().as_str()));
             }
         };
     }
 
     /// insert new box to chain
     /// cli INSERT TO :key_chain :data
-    pub fn insert_to_chain(&self, data: String, key_chain: &str) -> Result<(), MjlError> {
+    pub fn insert_to_chain(&self, raw_data: String, key_chain: &str) -> Result<Vec<String>, MjlError> {
         let last_key = match self.find_last_box(key_chain.to_string()) {
             Ok(last_key) => last_key,
-            Err(e) => return Err(MjlError::new(e.description())),
+            Err(e) => return Err(MjlError::new(e.to_string().as_str())),
         };
 
         // check is key_chain exist
@@ -201,7 +199,7 @@ impl Engine {
         // create new box
         let data = DataBox {
             prev_hash: Box::from(last_key.boxs[0].hashed_data.to_string().as_str()),
-            data: Box::from(data),
+            data: Box::from(raw_data),
         };
 
         let serialized = serializer(
@@ -213,8 +211,13 @@ impl Engine {
             return Err(MjlError::new("genesis chain failed, serializer failed"));
         } else {
             // writing to file
-            if self.write_persistent_data(serialized) {
-                Ok(())
+            if self.write_persistent_data(serialized.as_str()) {
+                let insert_information: Vec<&str> = serialized.split("|").collect();
+                Ok(vec![
+                    insert_information[1].to_string(),
+                    insert_information[2].to_string(),
+                    insert_information[3].to_string()
+                ])
             } else {
                 return Err(MjlError::new("genesis chain failed, write file failed"));
             }
@@ -226,7 +229,7 @@ impl Engine {
         let data = match self.read_persistent_data() {
             Ok(data) => data,
             Err(e) => {
-                return Err(MjlError::new(e.description()));
+                return Err(MjlError::new(e.to_string().as_str()));
             }
         };
         let rows: Vec<&str> = data.trim().split("\n").collect();
@@ -313,8 +316,37 @@ impl Engine {
     }
 
     /// cli RECORDS
-    pub fn list_records() {}
+    pub fn list_records(&self) -> Result<Vec<Vec<String>>, MjlError> {
+        let data = match self.read_persistent_data() {
+            Ok(data) => data,
+            Err(e) => {
+                return Err(MjlError::new(e.to_string().as_str()));
+            }
+        };
+        let rows: Vec<&str> = data.trim().split("\n").collect();
 
-    /// cli FIND
-    pub fn find_box() {}
+        let mut boxs: BTreeMap<&str, &str> = BTreeMap::new();
+        for x in &rows {
+            let cols: Vec<&str> = x.split("|").collect();
+
+            // find if exist remove
+            match boxs.get_key_value(cols[0]) {
+                None => {
+                    if cols.len() >= 3 {
+                        boxs.insert(cols[0], cols[2]);
+                    }
+                }
+                Some(_) => {}
+            };
+        }
+
+        let mut records: Vec<Vec<String>> = Vec::new();
+        if boxs.len() > 0 {
+            for x in boxs {
+                records.push(vec![x.0.to_string(), x.1.to_string()]);
+            }
+        }
+        return Ok(records);
+    }
+
 }

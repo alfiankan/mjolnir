@@ -1,9 +1,7 @@
 #[cfg(test)]
 mod engine_tests {
-    use std::fmt::Error;
     use owo_colors::OwoColorize;
     use crate::mjl::engine::Engine;
-    use crate::types::SelectResult;
 
     #[test]
     fn read_persistent_file_test() {
@@ -51,7 +49,10 @@ mod engine_tests {
     }
 
     #[test]
-    fn get_all_records_test() {}
+    fn get_all_records_test() {
+        let mjl = Engine::new("data.mj");
+        println!("{:?}", mjl.list_records()  );
+    }
 
     #[test]
     fn find_last_box_test() {

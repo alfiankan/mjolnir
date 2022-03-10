@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::any::TypeId;
 use std::error::Error;
-use std::fmt::{write, Debug, Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DataBox {

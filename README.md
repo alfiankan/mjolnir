@@ -25,6 +25,7 @@
   - make sure you have rustup
   - clone this repository on master branch
   - then build ``` cargo build --all-targets --release ```
+  - movemjolnir binary to bin directory ``` sudo cp target/release/mjolnir /usr/local/bin/ ```
 
 ## Terms
 - Box : Box is imaginary block or Box conatins prev hash, data, and hash :

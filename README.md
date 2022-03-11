@@ -42,6 +42,8 @@
 
 ## How to use
 - make sure mjlnir installed
+- create text file to store data
+- set env ```export MJL_DATA_STORE=/path/to/mjfile/database.mj```
 - open mjolnir cli by typing ```mjolnir``` in terminal
 
 ```

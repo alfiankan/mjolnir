@@ -5,6 +5,8 @@ use std::borrow::Borrow;
 use std::io;
 use std::io::Write;
 use std::process::exit;
+use std::env;
+
 
 fn chained_view(prev_hash: &str, data: &str, hashed_data: &str) {
     // trim every 50 chars
@@ -229,26 +231,36 @@ fn eval_command(mql: &str, engine: &Engine) {
 }
 
 pub fn start_cli() {
-    let engine = Engine::new(env!("FILE_NAME"));
 
-    let mut mql = String::new();
+    //read env
+    match env::var("MJL_DATA_STORE") {
+        Ok(file_name) => {
 
-    let input = io::stdin();
-    let mut lines = 1;
-    loop {
-        mql.clear();
-        println!();
-        print!("[{}] [mql] > ", lines.yellow());
-        io::stdout().flush().expect("CLI Fatal Error");
+            let engine = Engine::new(file_name.to_string().as_str());
+            let mut mql = String::new();
 
-        match input.read_line(&mut mql) {
-            Ok(_) => {}
-            Err(err) => {
-                println!("Error => {}", err);
-                continue;
+            let input = io::stdin();
+            let mut lines = 1;
+            loop {
+                mql.clear();
+                println!();
+                print!("[{}] [mql] > ", lines.yellow());
+                io::stdout().flush().expect("CLI Fatal Error");
+
+                match input.read_line(&mut mql) {
+                    Ok(_) => {}
+                    Err(err) => {
+                        println!("Error => {}", err);
+                        continue;
+                    }
+                }
+                eval_command(mql.trim(), engine.borrow());
+                lines = lines + 1;
             }
         }
-        eval_command(mql.trim(), engine.borrow());
-        lines = lines + 1;
+        Err(_) => {
+            println!("env MJL_DATA_STORE ot set");
+        }
     }
+
 }
